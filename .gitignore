@@ -1,0 +1,4 @@
+*.src.rock
+*.all.rock
+*.tar.gz
+lua_modules/
