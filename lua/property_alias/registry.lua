@@ -84,6 +84,37 @@ function M.new(input)
     return M.new(combined)
   end
 
+  function api:without(selectors)
+    -- Match complete authored observations, not just normalized alias keys.
+    local checked = M.new(selectors):entries()
+    local function identity(e)
+      local out = {}
+      for _, value in ipairs({e.entity_id,e.alias,e.scope,e.provenance}) do
+        out[#out+1] = #value .. ':' .. value
+      end
+      return table.concat(out)
+    end
+    local selected, matched = {}, {}
+    for _, e in ipairs(checked) do
+      local key = identity(e)
+      if selected[key] then error('withdrawal selectors must be distinct') end
+      selected[key] = true
+    end
+    local retained, removed = {}, 0
+    for _, e in ipairs(entries) do
+      local key = identity(e)
+      if selected[key] then removed=removed+1;matched[key]=true
+      else retained[#retained+1]=copy(e) end
+    end
+    local unmatched, matched_count = {}, 0
+    for _, e in ipairs(checked) do
+      if matched[identity(e)] then matched_count=matched_count+1
+      else unmatched[#unmatched+1]=copy(e) end
+    end
+    return M.new(retained), {requested_count=#checked,matched_selectors=matched_count,
+      removed_count=removed,unmatched_entries=unmatched}
+  end
+
   function api:audit()
     local scoped, unscoped, keys = {}, {}, {}
     for key in pairs(by_key) do keys[#keys+1]=key end

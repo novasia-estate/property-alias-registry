@@ -78,3 +78,20 @@ lua examples/resolve.lua
 ```
 
 The six-entry synthetic catalogue includes Thai/Cyrillic aliases, names reused across scopes and one intentional normalization collision. Behavioral checks cover all four outcomes, Unicode boundaries, exact scope behavior, no-fuzzy/no-transliteration behavior, mutation isolation and collision auditing. No network, storage or automatic logging is implemented by the module; the example prints only its authored fixtures.
+
+## 1.2: withdraw one authored observation without rewriting the registry
+
+```lua
+local next_registry, report = registry:without({
+  {entity_id='DEMO-A', alias='Garden Court', scope='demo:central',
+   provenance='authored synthetic fixture A'}
+})
+print(report.removed_count)
+print(#report.unmatched_entries)
+```
+
+All four authored fields select an observation: identifier, **exact original alias**, scope and provenance. Normalized alias-key equality does not authorize withdrawal. Removing one source observation preserves aliases backed by other provenance and does not alter the original registry. Identical repeated copies of the selected observation are all removed and counted. Duplicate selectors reject the whole request; unmatched selectors are returned for review.
+
+The returned registry has freshly computed resolution and conflict audits. A formerly ambiguous label may resolve after an explicit withdrawal, but that is a change in your supplied claims, not proof about a real building. No source is contacted, no external evidence is deleted, and no preferred authority is inferred. Keep your own withdrawal history and reason. Empty withdrawals are valid; malformed selectors reject transactionally. The same construction limits and UTF-8 policy apply.
+
+Run both `lua tests/run.lua` and `lua tests/withdraw.lua`: 28 original checks plus 15 withdrawal checks. Compatible with the same Lua5.1–5.4 and LuaJIT runtimes.

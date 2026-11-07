@@ -15,16 +15,17 @@ jobs:
         run: |
           for runtime in lua5.1 lua5.2 lua5.3 lua5.4 luajit; do
             "$runtime" tests/run.lua
+            "$runtime" tests/withdraw.lua
           done
-      - run: luarocks lint property-alias-registry-1.0.0-1.rockspec
-      - run: luarocks pack property-alias-registry-1.0.0-1.rockspec
+      - run: luarocks lint property-alias-registry-1.2.0-1.rockspec
+      - run: luarocks pack property-alias-registry-1.2.0-1.rockspec
       - name: Install actual source rock separately
         run: |
-          luarocks --lua-version=5.4 --tree="$RUNNER_TEMP/alias-consumer" install property-alias-registry-1.0.0-1.src.rock
+          luarocks --lua-version=5.4 --tree="$RUNNER_TEMP/alias-consumer" install property-alias-registry-1.2.0-1.src.rock
           eval "$(luarocks --lua-version=5.4 --tree="$RUNNER_TEMP/alias-consumer" path)"
           cd "$RUNNER_TEMP"
-          lua5.4 -e 'local a=require("property_alias"); local r=a.new({{entity_id="DEMO",alias="Court",scope="test",provenance="synthetic"}}); assert(r:resolve("COURT","test").entity_id=="DEMO"); print("Isolated rock consumer PASS")'
+          lua5.4 -e 'local a=require("property_alias"); local r=a.new({{entity_id="DEMO",alias="Court",scope="test",provenance="synthetic"}}); assert(a.VERSION=="1.2.0"); assert(r:resolve("COURT","test").entity_id=="DEMO"); local n,report=r:without(r:entries()); assert(n:resolve("Court").status=="unknown" and report.removed_count==1); print("Isolated rock consumer PASS")'
       - uses: actions/upload-artifact@v4
         with:
           name: property-alias-source-rock
-          path: property-alias-registry-1.0.0-1.src.rock
+          path: property-alias-registry-1.2.0-1.src.rock
